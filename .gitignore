@@ -2,6 +2,11 @@ pom.xml
 pom.xml.asc
 *.jar
 *.class
+**.swp
+**.swo
+**.jar
+**.class
+**.#**
 /lib/
 /classes/
 /target/
@@ -11,3 +16,9 @@ pom.xml.asc
 .lein-plugins/
 .lein-failures
 .nrepl-port
+.nrepl-history
+/.lein-*
+/resources/public/
+/out
+.idea/
+*.iml
