@@ -68,11 +68,12 @@
   "Returns the React class that is to be used for this component or nil if it's not a controlled
    input."
   [type attrs]
-  (case (name type)
-    "input" (cond
-              (:checked attrs) '(hiccada.input/wrapped-checked)
-              (:value attrs) '(hiccada.input/wrapped-input)
-              :else nil)
-    "select" (when (:value attrs) '(hiccada.input/wrapped-select))
-    "textarea" (when (:value attrs) '(hiccada.input/wrapped-textarea))
-    nil))
+  (when (keyword? type)
+    (case (name type)
+      "input" (cond
+                (:checked attrs) '(hiccada.input/wrapped-checked)
+                (:value attrs) '(hiccada.input/wrapped-input)
+                :else nil)
+      "select" (when (:value attrs) '(hiccada.input/wrapped-select))
+      "textarea" (when (:value attrs) '(hiccada.input/wrapped-textarea))
+      nil)))

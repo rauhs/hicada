@@ -42,6 +42,7 @@
 
 (def ^:dynamic *config* default-config)
 (def ^:dynamic *handlers* default-handlers)
+(def ^:dynamic *env* nil)
 
 (defmulti compile-react
           "Compile a Clojure data structure into a React fn call."
@@ -351,22 +352,34 @@
     (:inline? *config*) to-js))
 
 (defn compile
-  "Opts:
-  - :array-children? true - for product build of React only or you'll enojoy a lot of warnings :)
-  - :create-element 'js/React.createElement - you can also use your own function here.
-  - :inline? true - NOT working yet, also probably not worth it from a perf standpoint.
-  - :wrap-input? true - if inputs should be wrapped. Try without.
-  - :emit-fn
-    o for inline: called with [type key ref props]
-    o non-inline: called with [type config-js child-or-children]
+  "Arguments:
+  - content: The hiccup to compile
+  - opts
+   o :array-children? true - for product build of React only or you'll enojoy a lot of warnings :)
+   o :create-element 'js/React.createElement - you can also use your own function here.
+   o :inline? true - NOT working yet, also probably not worth it from a perf standpoint.
+   o :wrap-input? true - if inputs should be wrapped. Try without.
+   o :emit-fn
+     x for inline: called with [type key ref props]
+     x non-inline: called with [type config-js child-or-children]
 
-  React Native special recommended options:
-  - :no-string-tags? true - Never output string tags (don't exits in RN)
-  - :default-ns 'foo.bar.xyz - Any unprefixed component will get prefixed with this ns."
-  [content & [opts handlers]]
-  (binding [*config* (merge default-config opts)
-            *handlers* (merge default-handlers handlers)]
-    (emitter content)))
+   React Native special recommended options:
+   o :no-string-tags? true - Never output string tags (don't exits in RN)
+   o :default-ns 'foo.bar.xyz - Any unprefixed component will get prefixed with this ns.
+  - handlers:
+   A map to handle special tags. See default-handlers in this namespace.
+  - env: The macro environment. Not used currently."
+  ([content]
+   (compile content default-config))
+  ([content opts]
+   (compile content opts default-handlers))
+  ([content opts handlers]
+   (compile content opts handlers nil))
+  ([content opts handlers env]
+   (binding [*config* (merge default-config opts)
+             *handlers* (merge default-handlers handlers)
+             *env* env]
+     (emitter content))))
 
 
 (comment
