@@ -21,9 +21,12 @@
 
 (def default-handlers {;; Create a native component:
                        :> (fn [_ klass attrs & children]
-                            (if (map? attrs)
-                              [klass attrs children]
-                              [klass {} (cons attrs children)]))
+                            ;; NEW: We ALWAYS require the attrs to be present!
+                            [klass attrs children]
+                            #_
+                                (if (map? attrs)
+                                  [klass attrs children]
+                                  [klass {} (cons attrs children)]))
                        ;; React.Fragment
                        :* (fn [_ attrs & children]
                             (if (map? attrs)
@@ -80,10 +83,12 @@
 (defn compile-config
   "Compile a HTML attribute map."
   [attrs]
-  (->> (seq attrs)
-       (mapv #(apply compile-config-kv %1))
-       (apply merge)
-       (util/html-to-dom-attrs)))
+  (if (map? attrs)
+    (->> (seq attrs)
+         (mapv #(apply compile-config-kv %1))
+         (apply merge)
+         (util/html-to-dom-attrs))
+    attrs))
 #_(compile-config {:key "b"})
 
 
@@ -274,16 +279,18 @@
 (defn- to-js-map
   "Convert a map into a JavaScript object."
   [m]
-  (let [kvs (doall (interleave (mapv to-js (keys m))
-                               (mapv to-js (vals m))))
-        kvs-str (->> (repeat "~{}:~{}")
-                     (take (count m))
+  (let [key-strs (mapv to-js (keys m))
+        non-str (remove string? key-strs)
+        _ (assert (empty? non-str)
+                  (str "Hicada: Props can't be dynamic:"
+                       (pr-str non-str) "in: " (pr-str m)))
+        kvs-str (->> (mapv #(-> (str \' % "':~{}")) key-strs)
                      (interpose ",")
                      (apply str))]
     (vary-meta
-      (list* 'js* (str "{" kvs-str "}") kvs)
+      (list* 'js* (str "{" kvs-str "}") (mapv to-js (vals m)))
       assoc :tag 'object))
-  ;; We avoid cljs.core/js-obj here since it introduces a let and an IIFE.
+  ;; We avoid cljs.core/js-obj here since it introduces a let and an IIFE:
   #_(apply list 'cljs.core/js-obj
            (doall (interleave (mapv to-js (keys m))
                               (mapv to-js (vals m))))))
@@ -357,7 +364,7 @@
   - opts
    o :array-children? true - for product build of React only or you'll enojoy a lot of warnings :)
    o :create-element 'js/React.createElement - you can also use your own function here.
-   o :inline? true - NOT working yet, also probably not worth it from a perf standpoint.
+   o :inline? false - NOT supported yet. Possibly in the future...
    o :wrap-input? true - if inputs should be wrapped. Try without.
    o :emit-fn
      x for inline: called with [type key ref props]
@@ -376,6 +383,7 @@
   ([content opts handlers]
    (compile content opts handlers nil))
   ([content opts handlers env]
+   (assert (not (:inline? opts)) ":inline? isn't supported yet")
    (binding [*config* (merge default-config opts)
              *handlers* (merge default-handlers handlers)
              *env* env]
@@ -385,6 +393,14 @@
 (comment
   (compile '[:* {:key "a"} a b])
   (compile '[:* a b])
+  (compile '[:div props b])
+
+  (compile
+    '[:> Transition {:in in-prop :timeout 300}
+      (fn [state])])
+
+  (compile
+    '[:> Transition (foo bar) b])
 
   (compile
     '[:div [:input {:value "fo"}]
