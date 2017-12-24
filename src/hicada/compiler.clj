@@ -19,15 +19,8 @@
   (:import
     (clojure.lang Keyword)))
 
-(def default-handlers {;; Create a native component:
-                       :> (fn [_ klass attrs & children]
-                            ;; NEW: We ALWAYS require the attrs to be present!
-                            [klass attrs children]
-                            #_
-                                (if (map? attrs)
-                                  [klass attrs children]
-                                  [klass {} (cons attrs children)]))
-                       ;; React.Fragment
+(def default-handlers {:> (fn [_ klass attrs & children]
+                            [klass attrs children])
                        :* (fn [_ attrs & children]
                             (if (map? attrs)
                               ['js/React.Fragment attrs children]
@@ -314,16 +307,17 @@
           (str "Got: " (class x)))
   (if (keyword? x)
     (if (:no-string-tags? *config*)
-      (symbol (or (namespace x) (name (:default-ns *config*))) (name x))
+      (symbol (or (namespace x) (some-> (:default-ns *config*) name)) (name x))
       (name x))
     x))
+
 
 (defn emit-react
   "Emits the final react js code"
   [tag attrs children]
   (let [{:keys [transform-fn emit-fn inline? wrap-input?
                 create-element array-children?]} *config*
-        [tag attrs children] (transform-fn [tag attrs children])]
+        [tag attrs children] (transform-fn [tag attrs children *env*])]
     (if inline?
       (let [type (or (and wrap-input? (util/controlled-input-class tag attrs))
                      (tag->el tag))
@@ -389,28 +383,42 @@
              *env* env]
      (emitter content))))
 
-
 (comment
+
   (compile '[:* {:key "a"} a b])
+
   (compile '[:* a b])
-  (compile '[:div props b])
+  (compile '[:> :div props b])
 
   (compile
-    '[:> Transition {:in in-prop :timeout 300}
+    '[:> :div props
+      "foo"])
+
+  (compile
+    '[:> Transition {:in in-prop
+                     :unmount-on-exit true
+                     :timeout {:enter 300, :exit 100}}
       (fn [state])])
 
   (compile
-    '[:> Transition (foo bar) b])
+    '[:> Transition props callback])
+
+  :wrap-input? true
 
   (compile
-    '[:div [:input {:value "fo"}]
-      [:> Foo {:prop 0}
-       hmm]]
-    {:create-element 'js/R
-     :wrap-input? true
-     :no-string-tags? true
-     :default-ns 'my.rn.native
-     :emit-fn nil
-     :transform-fn (comp)
-     :array-children? true}))
+    '[:Text a b]
+    {:no-string-tags? true
+     :default-ns 'my.rn.native})
+
+  (compile
+    '[:rn/Text a b]
+    {})
+
+  (compile
+    '[:Text a b]
+    {:no-string-tags? true})
+
+  (compile
+    '[:div a b]
+    {:array-children? false}))
 
