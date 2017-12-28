@@ -17,5 +17,3 @@ macro and call hicada from it:
                         :array-children? false}))
 ```
 
-Reason for this is explained in... (TODO)
-
