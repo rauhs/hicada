@@ -1,5 +1,5 @@
-(defproject hicada "0.1"
-  :description "A cljs logger and viewer"
+(defproject hicada "0.1.1"
+  :description "A hiccup compiler for clojurescript"
   :url "http://www.github.com/rauhs/hicada"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

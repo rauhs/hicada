@@ -54,24 +54,26 @@
 #_(vec+stringify-class :foo)
 
 (defn attributes
-  "Normalize the :class elements"
+  "Normalize the :class, :class-name and :className elements"
   [attrs]
-  (if (:class attrs)
-    (update attrs :class vec+stringify-class)
-    attrs))
+  (reduce (fn [attrs kw]
+            (if-some [m (get attrs kw)]
+              (-> attrs
+                  (dissoc kw)
+                  (update :class into (vec+stringify-class m)))
+              attrs))
+          attrs [:class :className :class-name]))
 
 (defn merge-with-class
   "Like clojure.core/merge but concatenate :class entries."
   [m0 m1]
   (let [m0 (attributes m0)
         m1 (attributes m1)
-        classes (into [] (comp (mapcat :class)) [m0 m1])
-        ;classes (vec (apply concat classes))
-        ]
+        classes (into [] (comp (mapcat :class)) [m0 m1])]
     (cond-> (conj m0 m1)
       (not (empty? classes))
       (assoc :class classes))))
-#_(merge-with-class {})
+#_(merge-with-class {:class "a"} {:class ["b"]})
 
 (defn strip-css
   "Strip the # and . characters from the beginning of `s`."
@@ -129,7 +131,7 @@
          (sequential? x)
          x
          :else (list x))
-       (remove nil?)))
+       (filterv some?)))
 
 (defn element
   "Given:
@@ -153,4 +155,5 @@
        (children content)])))
 #_(element [:div#foo 'a])
 #_(element [:div.a#foo])
+#_(element [:h1.b {:className "a"}])
 

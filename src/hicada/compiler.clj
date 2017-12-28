@@ -385,6 +385,13 @@
 
 (comment
 
+  (compile [:h1.b {:class "a"}])
+
+  (compile [:h1.b {:className "a"}])
+
+  (compile [:h1.b {:class-name "a"}])
+
+
   (compile '[:* {:key "a"} a b])
 
   (compile '[:* a b])
