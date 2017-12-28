@@ -1,6 +1,7 @@
 # hicada
 Hiccup compiler similar to sablono
 
+See: https://medium.com/@rauh/a-new-hiccup-compiler-for-clojurescript-8a7b63dc5128
 
 # Usage
 
