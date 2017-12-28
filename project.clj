@@ -1,4 +1,4 @@
-(defproject hicada "0.1-SNAPSHOT"
+(defproject hicada "0.1"
   :description "A cljs logger and viewer"
   :url "http://www.github.com/rauhs/hicada"
   :license {:name "Eclipse Public License"

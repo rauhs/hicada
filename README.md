@@ -17,3 +17,7 @@ macro and call hicada from it:
                         :array-children? false}))
 ```
 
+# Clojars
+
+[![Clojars Project](http://clojars.org/hicada/latest-version.svg)](http://clojars.org/hicada)
+
