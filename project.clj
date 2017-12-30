@@ -19,8 +19,7 @@
   :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [org.clojure/clojurescript "1.9.229" :classifier "aot" :scope "provided"]
                  [com.cognitect/transit-clj "0.8.300" :scope "provided"]
-                 [figwheel-sidecar "0.5.10" :scope "provided"]
-                 [cljsjs/highlight "8.4-0"]]
+                 [figwheel-sidecar "0.5.10" :scope "provided"]]
 
   :repositories [["clojars" {:sign-releases false}]]
   :plugins [[lein-cljsbuild "1.1.4"]
@@ -73,7 +72,7 @@
                       :optimizations :advanced
                       :pretty-print  false}}}}
 
-  :jar-exclusions     [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main" #"\.swp" #"templates"]
+   :jar-exclusions  [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main" #"\.swp" #"templates"]
    :uberjar {:hooks [leiningen.cljsbuild]
              ;;:hooks [leiningen.cljsbuild]
              ;;:env {:production true}
