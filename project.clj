@@ -1,4 +1,4 @@
-(defproject hicada "0.1.1"
+(defproject hicada "0.1.2"
   :description "A hiccup compiler for clojurescript"
   :url "http://www.github.com/rauhs/hicada"
   :license {:name "Eclipse Public License"
