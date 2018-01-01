@@ -31,6 +31,7 @@
                      :wrap-input? false
                      :array-children? false
                      :emit-fn nil
+                     :rewrite-for? false
                      ;; A fn that will get [tag attr children] and return
                      ;; [tag attr children] just before emitting.
                      :transform-fn identity
@@ -130,7 +131,18 @@
 
 (defmethod compile-form "for"
   [[_ bindings body]]
-  `(~'cljs.core/into-array (for ~bindings ~(emitter body))))
+  ;; Special optimization: For a simple (for [x xs] ...) we rewrite the for
+  ;; to a fast reduce outputting a JS array:
+  (if (:rewrite-for? *config*)
+    (if (== 2 (count bindings))
+      (let [[item coll] bindings]
+        `(reduce (fn ~'hicada-for-reducer [out-arr# ~item]
+                   (.push out-arr# ~(emitter body))
+                   out-arr#)
+                 (cljs.core/array) ~coll))
+      ;; Still optimize a little by giving React an array:
+      (list 'cljs.core/into-array `(for ~bindings ~(emitter body))))
+    `(for ~bindings ~(emitter body))))
 
 (defmethod compile-form "if"
   [[_ condition & body]]
@@ -358,11 +370,13 @@
   - opts
    o :array-children? true - for product build of React only or you'll enojoy a lot of warnings :)
    o :create-element 'js/React.createElement - you can also use your own function here.
-   o :inline? false - NOT supported yet. Possibly in the future...
-   o :wrap-input? true - if inputs should be wrapped. Try without.
+   o :wrap-input? true - if inputs should be wrapped. Try without!
+   o :rewrite-for? true - rewrites simple (for [x xs] ...) into efficient reduce pushing into
+                          a JS array.
    o :emit-fn
      x for inline: called with [type key ref props]
      x non-inline: called with [type config-js child-or-children]
+   o :inline? false - NOT supported yet. Possibly in the future...
 
    React Native special recommended options:
    o :no-string-tags? true - Never output string tags (don't exits in RN)
@@ -386,11 +400,12 @@
 (comment
 
   (compile [:h1.b {:class "a"}])
-
   (compile [:h1.b {:className "a"}])
-
   (compile [:h1.b {:class-name "a"}])
 
+  (compile '[:div (for [x xs]
+                    [:span x])]
+           {:rewrite-for? true})
 
   (compile '[:* {:key "a"} a b])
 
@@ -398,34 +413,15 @@
   (compile '[:> :div props b])
 
   (compile
-    '[:> :div props
-      "foo"])
-
-  (compile
     '[:> Transition {:in in-prop
                      :unmount-on-exit true
                      :timeout {:enter 300, :exit 100}}
       (fn [state])])
 
-  (compile
-    '[:> Transition props callback])
-
-  :wrap-input? true
-
-  (compile
-    '[:Text a b]
+  (compile '[:Text a b]
     {:no-string-tags? true
      :default-ns 'my.rn.native})
-
-  (compile
-    '[:rn/Text a b]
-    {})
-
-  (compile
-    '[:Text a b]
-    {:no-string-tags? true})
-
-  (compile
-    '[:div a b]
-    {:array-children? false}))
+  (compile '[:rn/Text a b] {})
+  (compile '[:Text a b] {:no-string-tags? true})
+  (compile '[:div a b] {:array-children? false}))
 
