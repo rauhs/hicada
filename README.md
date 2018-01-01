@@ -57,6 +57,14 @@ See the `default-handlers` var in `hicada.compiler` for examples. By default `:*
 
 Your macro environment. Pass in `&env`.
 
+# Usage with other React libraries
+
+You can use hicada with:
+
+- Reagent, it will happily accept precompiled hiccup
+- Rum, simple overwrite the `sablono.compiler/compile-html` macro.
+- Om
+
 # License
 
 EPL, same as Clojure.
