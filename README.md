@@ -3,6 +3,11 @@ Hiccup compiler similar to sablono
 
 See: https://medium.com/@rauh/a-new-hiccup-compiler-for-clojurescript-8a7b63dc5128
 
+# Clojars
+
+[![Clojars Project](http://clojars.org/hicada/latest-version.svg)](http://clojars.org/hicada)
+
+
 # Usage
 
 There is *no* macro for you to use. You **must** create your own
@@ -52,7 +57,6 @@ See the `default-handlers` var in `hicada.compiler` for examples. By default `:*
 
 Your macro environment. Pass in `&env`.
 
-# Clojars
+# License
 
-[![Clojars Project](http://clojars.org/hicada/latest-version.svg)](http://clojars.org/hicada)
-
+EPL, same as Clojure.
