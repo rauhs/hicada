@@ -37,8 +37,7 @@ A map with the following keys:
    
 - `:wrap-input?`: If inputs should be wrapped. Try without! You're responsible for requiring the CLJS namespace (create a `.cljs` file with the same name as your macro namespace and it will get required automatically.
 
-- `:rewrite-for?`: Rewrites simple (for [x xs] ...) into efficient reduce pushing into
-                          a JS array.
+- `:rewrite-for?`: Rewrites simple `(for [x xs] ...)` into efficient reduce pushing into a JS array.
 
 - `:emit-fn`: gets called with `[type config-js child-or-children]`
 
