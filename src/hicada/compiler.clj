@@ -3,7 +3,7 @@
   Hicada - Hiccup compiler aus dem Allgaeu
 
   NOTE: The code for has been forked like this:
-  weavejester/hiccup -> r0man/sablono -> hiccada.
+  weavejester/hiccup -> r0man/sablono -> Hicada.
 
   Note about :array-children? :
   Go read the React.createElement() function, it's very short and easy to understand.
@@ -15,9 +15,7 @@
   (:refer-clojure :exclude [compile])
   (:require
     [hicada.normalize :as norm]
-    [hicada.util :as util])
-  (:import
-    (clojure.lang Keyword)))
+    [hicada.util :as util]))
 
 (def default-handlers {:> (fn [_ klass attrs & children]
                             [klass attrs children])
@@ -242,6 +240,16 @@
     ;; We assume #2. Always!
     (compile-element (list* tag {} attrs children))
 
+    ;; Problem: [a b c] could be interpreted as:
+    ;; 1. The coll of ReactNodes [a b c] OR
+    ;; 2. a is a React Element, b are the props and c is the first child
+    ;; We default to 1) (handled below) BUT, if b is a map, we know this must be 2)
+    ;; since a map doesn't make any sense as a ReactNode.
+    ;; [foo {...} ch0 ch1] NEVER makes sense to interpret as a sequence
+
+    (and (vector? element) (map? attrs))
+    (emit-react tag attrs children)
+
     (seq? element)
     (seq (mapv compile-html element))
 
@@ -279,6 +287,7 @@
             (cond
               (map? x) :map
               (vector? x) :vector
+              (keyword? x) :keyword
               :else (class x))))
 
 (defn- to-js-map
@@ -300,7 +309,7 @@
            (doall (interleave (mapv to-js (keys m))
                               (mapv to-js (vals m))))))
 
-(defmethod to-js Keyword [x] (name x))
+(defmethod to-js :keyword [x] (name x))
 (defmethod to-js :map [m] (to-js-map m))
 (defmethod to-js :vector [xs]
   (apply list 'cljs.core/array (mapv to-js xs)))
@@ -399,9 +408,9 @@
 
 (comment
 
-  (compile [:h1.b {:class "a"}])
-  (compile [:h1.b {:className "a"}])
-  (compile [:h1.b {:class-name "a"}])
+  (compile [:h1.b.c {:class "a"}]) ;; should be "b c a", order preserved
+  (compile [:h1.b.c {:className "a"}])
+  (compile [:h1.b.c {:class-name "a"}])
 
   (compile '[:div (for [x xs]
                     [:span x])]
@@ -426,6 +435,10 @@
 
   (compile '[:* a b])
   (compile '[:> :div props b])
+
+  (compile '[Transition {:in in-prop} (fn [state])]) ;; works eq to :>
+  (compile '[a b c]) ;; We have a coll of ReactNodes. Don't touch
+  (compile '(some-fn {:in in-prop} (fn [state]))) ;; FN call, don't touch
 
   (compile
     '[:> Transition {:in in-prop

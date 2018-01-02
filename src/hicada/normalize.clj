@@ -60,7 +60,7 @@
             (if-some [m (get attrs kw)]
               (-> attrs
                   (dissoc kw)
-                  (update :class into (vec+stringify-class m)))
+                  (update :class (fnil into []) (vec+stringify-class m)))
               attrs))
           attrs [:class :className :class-name]))
 

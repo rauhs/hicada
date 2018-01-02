@@ -1,3 +1,8 @@
+# 0.1.3
+A `[a {:some-props y} ch0 ch1]` will now work and call `createElement` on the
+type `a`. Previously this was assumed to be a collection of ReactNodes, but IFF
+the second element in the vector is a map, the collection assumption doesn't
+make sense. This is equivalent to `[:> a {:some-props y} ch0 ch1]` now.
 
 # 0.1.2
 New option `:rewrite-for?` which rewrites simple `(for [x xs] hiccup...)` into
