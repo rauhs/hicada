@@ -31,6 +31,8 @@
                      :emit-fn nil
                      :rewrite-for? false
                      :server-render? false
+                     ;; If you also want to camelcase string map keys, add string? here:
+                     :camelcase-key-pred (some-fn keyword? symbol?)
                      ;; A fn that will get [tag attr children] and return
                      ;; [tag attr children] just before emitting.
                      :transform-fn identity
@@ -81,7 +83,9 @@
                    (case k
                      :class :className
                      :for :htmlFor
-                     (util/camel-case k))
+                     (if ((:camelcase-key-pred *config*) k)
+                       (util/camel-case k)
+                       k))
                    (compile-config-kv k v))) {} attrs)
     attrs))
 #_(compile-config {:class ["b" 'c] :style {:border-width "2px"}}) ;; camelcase style
@@ -392,6 +396,8 @@
                           a JS array.
    o :emit-fn - optinal: called with [type config-js child-or-children]
    o :server-render? - defaults to false. Doesn't do any JS outputting. Still requires an :emit-fn!
+   o :camelcase-key-pred - defaults to (some-fn keyword? symbol?), ie. map keys that have
+                           string keys, are NOT by default converted from kebab-case to camelCase!
    o :inline? false - NOT supported yet. Possibly in the future...
 
    React Native special recommended options:
@@ -447,6 +453,9 @@
 
   (compile '[:* a b])
   (compile '[:> :div props b])
+
+  ;; Doesn't convert string keys, but
+  (compile '[X {"kebab-case" y :camel-case x camel-case-2 8}])
 
   (compile '[Transition {:in in-prop} (fn [state])]) ;; works eq to :>
   (compile '[a b c]) ;; We have a coll of ReactNodes. Don't touch

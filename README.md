@@ -47,6 +47,16 @@ A map with the following keys:
 
 - `:emit-fn`: gets called with `[type config-js child-or-children]`
 
+- `:server-render?`: Doesn't convert anything to JS. Useful if you still want
+  to process transform-fns and use other libraries (such as Rum) for server
+  side rendering
+
+- `:camelcase-key-pred`: By default keyword and symbol map keys are converted
+  from kebab-case to camelCase. Ie. `[:> Foo {:do-it ture}]` will result in
+  `React.createElement(Foo, {"doIt" true})`. But `[:> Foo {"do-it" true}]` will
+  not do the conversion. With a custom function you can fine tune which keys
+  are converted and which are not.
+
 React Native special options:
 
 - `:no-string-tags?`: If set to `true`: Never output string tags (don't exits in react native)
