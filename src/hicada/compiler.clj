@@ -422,17 +422,6 @@
                      ;; Ensure props + children are in the right position:
                      [(list ::clone node) attrs children])})
 
-  (fn [tag attr children]
-    (if (= tag "clone")
-      (let [[node attrs & children] children]
-        (if array-children?
-          (list 'js/React.cloneElement node (to-js attrs)
-                (list* 'cljs.core/array children))
-          (list* 'js/React.cloneElement node (to-js attrs) children)))
-      (if array-children?
-        (list* 'js/React.createElement tag attr (list* 'cljs.core/array children))
-        (list* 'js/React.createElement tag attr children))))
-
   (compile '[:* {:key "a"} a b])
 
   (compile '[:* a b])
