@@ -217,7 +217,7 @@
   "Returns an unevaluated form that will render the supplied vector as a HTML element."
   [[tag attrs & children :as element]]
   (cond
-    ;; Special syntaxes:
+    ;; Special syntax:
     ;; [:> ReactNav {:key "xyz", :foo "bar} ch0 ch1]
     (get *handlers* tag)
     (let [f (get *handlers* tag)
@@ -246,9 +246,8 @@
     ;; We default to 1) (handled below) BUT, if b is a map, we know this must be 2)
     ;; since a map doesn't make any sense as a ReactNode.
     ;; [foo {...} ch0 ch1] NEVER makes sense to interpret as a sequence
-
     (and (vector? element) (map? attrs))
-    (emit-react tag attrs children)
+    (emit-react tag attrs (mapv compile-html children))
 
     (seq? element)
     (seq (mapv compile-html element))
@@ -257,9 +256,11 @@
     ;; [[:div "foo"] [:span "foo"]]
     :else
     (mapv compile-html element)))
-#_(compile-element '[:div "b"])
 #_(compile-element '[:> A {:foo "bar"} a])
 #_(compile-element '[:> A a b])
+#_(compile-element '[A {:foo "bar"}
+                     [:span a]])
+#_(compile-element '[A b a])
 #_(compile-element '[:* 0 1 2])
 #_(compile-element '(array [:div "foo"] [:span "foo"]))
 
