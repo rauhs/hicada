@@ -407,6 +407,32 @@
                     [:span x])]
            {:rewrite-for? true})
 
+  ;; Example :clone handler + emitter:
+  (compile '[:div
+             [:span {:key "foo"} a b c]
+             [:clone x {:key k} one two]
+             [:clone x {:key k}]]
+           {:array-children? false ;; works with both!
+            :emit-fn (fn [tag attr children]
+                       ;; Now handle the emitter case:
+                       (if (and (seq? tag) (= ::clone (first tag)))
+                         (list* 'js/React.cloneElement (second tag) attr children)
+                         (list* 'js/React.createElement tag attr children)))}
+           {:clone (fn [_ node attrs & children]
+                     ;; Ensure props + children are in the right position:
+                     [(list ::clone node) attrs children])})
+
+  (fn [tag attr children]
+    (if (= tag "clone")
+      (let [[node attrs & children] children]
+        (if array-children?
+          (list 'js/React.cloneElement node (to-js attrs)
+                (list* 'cljs.core/array children))
+          (list* 'js/React.cloneElement node (to-js attrs) children)))
+      (if array-children?
+        (list* 'js/React.createElement tag attr (list* 'cljs.core/array children))
+        (list* 'js/React.createElement tag attr children))))
+
   (compile '[:* {:key "a"} a b])
 
   (compile '[:* a b])
@@ -419,8 +445,8 @@
       (fn [state])])
 
   (compile '[:Text a b]
-    {:no-string-tags? true
-     :default-ns 'my.rn.native})
+           {:no-string-tags? true
+            :default-ns 'my.rn.native})
   (compile '[:rn/Text a b] {})
   (compile '[:Text a b] {:no-string-tags? true})
   (compile '[:div a b] {:array-children? false}))
