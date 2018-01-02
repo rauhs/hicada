@@ -22,22 +22,21 @@
       (if (or (empty? words)
               (= "aria" first-word)
               (= "data" first-word))
-        k (-> (map str/capitalize words)
-              (conj first-word)
-              str/join
-              keyword)))
+        k
+        (-> (map str/capitalize words)
+            (conj first-word)
+            str/join
+            keyword)))
     k))
 
 (defn camel-case-keys
   "Recursively transforms all map keys into camel case."
   [m]
   (if (map? m)
-    (let [ks (keys m)
-          kmap (zipmap ks (map camel-case ks))]
-      (-> (set/rename-keys m kmap)
-          (cond->
-            (map? (:style m))
-            (update-in [:style] camel-case-keys))))
+    (reduce-kv
+      (fn [m k v]
+        (assoc m (camel-case k) v))
+      {} m)
     m))
 
 (defn element?
@@ -45,16 +44,7 @@
   AND
    - first element is a keyword?"
   [x]
-  (and (vector? x)
-       (keyword? (first x))))
-
-(defn html-to-dom-attrs
-  ":class => :className
-   :for => :htmlFor"
-  [attrs]
-  (set/rename-keys (camel-case-keys attrs)
-                   {:class :className
-                    :for :htmlFor}))
+  (and (vector? x) (keyword? (first x))))
 
 (defn join-classes
   "Join the `classes` with a whitespace."

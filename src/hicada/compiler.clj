@@ -30,6 +30,7 @@
                      :array-children? false
                      :emit-fn nil
                      :rewrite-for? false
+                     :server-render? false
                      ;; A fn that will get [tag attr children] and return
                      ;; [tag attr children] just before emitting.
                      :transform-fn identity
@@ -50,38 +51,41 @@
 (defmulti compile-config-kv (fn [name value] name))
 
 (defmethod compile-config-kv :class [name value]
-  {:class
-   (cond (or (nil? value)
-             (keyword? value)
-             (string? value))
-         value
+  (cond (or (nil? value)
+            (keyword? value)
+            (string? value))
+        value
 
-         (and (or (sequential? value)
-                  (set? value))
-              (every? string? value))
-         (util/join-classes value)
+        (and (or (sequential? value)
+                 (set? value))
+             (every? string? value))
+        (util/join-classes value)
 
-         (vector? value)
-         (apply util/join-classes-js value)
+        (and (vector? value) (not (:server-render? *config*)))
+        (apply util/join-classes-js value)
 
-         :else value)})
+        :else value))
 
 (defmethod compile-config-kv :style [name value]
-  {name (util/camel-case-keys value)})
+  (util/camel-case-keys value))
 
 (defmethod compile-config-kv :default [name value]
-  {name value})
+  value)
 
 (defn compile-config
-  "Compile a HTML attribute map."
+  "Compile a HTML attribute map to react (class -> className), camelCases :style."
   [attrs]
   (if (map? attrs)
-    (->> (seq attrs)
-         (mapv #(apply compile-config-kv %1))
-         (apply merge)
-         (util/html-to-dom-attrs))
+    (reduce-kv (fn [m k v]
+                 (assoc m
+                   (case k
+                     :class :className
+                     :for :htmlFor
+                     (util/camel-case k))
+                   (compile-config-kv k v))) {} attrs)
     attrs))
-#_(compile-config {:key "b"})
+#_(compile-config {:class ["b" 'c] :style {:border-width "2px"}}) ;; camelcase style
+#_(compile-config {:on-click ()})
 
 
 (defn- unevaluated?
@@ -247,7 +251,7 @@
     ;; since a map doesn't make any sense as a ReactNode.
     ;; [foo {...} ch0 ch1] NEVER makes sense to interpret as a sequence
     (and (vector? element) (map? attrs))
-    (emit-react tag attrs (mapv compile-html children))
+    (emit-react tag attrs children)
 
     (seq? element)
     (seq (mapv compile-html element))
@@ -259,7 +263,7 @@
 #_(compile-element '[:> A {:foo "bar"} a])
 #_(compile-element '[:> A a b])
 #_(compile-element '[A {:foo "bar"}
-                     [:span a]])
+                     [:span  a]])
 #_(compile-element '[A b a])
 #_(compile-element '[:* 0 1 2])
 #_(compile-element '(array [:div "foo"] [:span "foo"]))
@@ -282,10 +286,12 @@
 
 (defmethod compile-react :default [x] x)
 
+#_(ns-unmap *ns* 'to-js)
 (defmulti to-js
           "Compiles to JS"
           (fn [x]
             (cond
+              (:server-render? *config*) :server-render ;; ends up in default but let user handle it
               (map? x) :map
               (vector? x) :vector
               (keyword? x) :keyword
@@ -294,17 +300,18 @@
 (defn- to-js-map
   "Convert a map into a JavaScript object."
   [m]
-  (let [key-strs (mapv to-js (keys m))
-        non-str (remove string? key-strs)
-        _ (assert (empty? non-str)
-                  (str "Hicada: Props can't be dynamic:"
-                       (pr-str non-str) "in: " (pr-str m)))
-        kvs-str (->> (mapv #(-> (str \' % "':~{}")) key-strs)
-                     (interpose ",")
-                     (apply str))]
-    (vary-meta
-      (list* 'js* (str "{" kvs-str "}") (mapv to-js (vals m)))
-      assoc :tag 'object))
+  (when-not (empty? m)
+    (let [key-strs (mapv to-js (keys m))
+          non-str (remove string? key-strs)
+          _ (assert (empty? non-str)
+                    (str "Hicada: Props can't be dynamic:"
+                         (pr-str non-str) "in: " (pr-str m)))
+          kvs-str (->> (mapv #(-> (str \' % "':~{}")) key-strs)
+                       (interpose ",")
+                       (apply str))]
+      (vary-meta
+        (list* 'js* (str "{" kvs-str "}") (mapv to-js (vals m)))
+        assoc :tag 'object)))
   ;; We avoid cljs.core/js-obj here since it introduces a let and an IIFE:
   #_(apply list 'cljs.core/js-obj
            (doall (interleave (mapv to-js (keys m))
@@ -378,19 +385,18 @@
   "Arguments:
   - content: The hiccup to compile
   - opts
-   o :array-children? true - for product build of React only or you'll enojoy a lot of warnings :)
+   o :array-children? - for product build of React only or you'll enojoy a lot of warnings :)
    o :create-element 'js/React.createElement - you can also use your own function here.
-   o :wrap-input? true - if inputs should be wrapped. Try without!
-   o :rewrite-for? true - rewrites simple (for [x xs] ...) into efficient reduce pushing into
+   o :wrap-input? - if inputs should be wrapped. Try without!
+   o :rewrite-for? - rewrites simple (for [x xs] ...) into efficient reduce pushing into
                           a JS array.
-   o :emit-fn
-     x for inline: called with [type key ref props]
-     x non-inline: called with [type config-js child-or-children]
+   o :emit-fn - optinal: called with [type config-js child-or-children]
+   o :server-render? - defaults to false. Doesn't do any JS outputting. Still requires an :emit-fn!
    o :inline? false - NOT supported yet. Possibly in the future...
 
    React Native special recommended options:
-   o :no-string-tags? true - Never output string tags (don't exits in RN)
-   o :default-ns 'foo.bar.xyz - Any unprefixed component will get prefixed with this ns.
+   o :no-string-tags? - Never output string tags (don't exits in RN)
+   o :default-ns - Any unprefixed component will get prefixed with this ns.
   - handlers:
    A map to handle special tags. See default-handlers in this namespace.
   - env: The macro environment. Not used currently."
@@ -412,6 +418,11 @@
   (compile [:h1.b.c {:class "a"}]) ;; should be "b c a", order preserved
   (compile [:h1.b.c {:className "a"}])
   (compile [:h1.b.c {:class-name "a"}])
+
+  (compile '[:div {:class [a]} "hmm"]
+           {:server-render? true
+            :emit-fn (fn [a b c]
+                       (into [a b] c))})
 
   (compile '[:div (for [x xs]
                     [:span x])]

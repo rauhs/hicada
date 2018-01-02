@@ -1,3 +1,6 @@
+# 0.1.5
+New option: `:server-render?` doens't genrated any `js*`.
+
 # 0.1.4
 A `[a {:some-props y} ch0 ch1]` will now work and call `createElement` on the
 type `a`. Previously this was assumed to be a collection of ReactNodes, but IFF
