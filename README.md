@@ -103,6 +103,10 @@ instance, if you often clone elements you can write a DSL to support it:
 
 ```
 
+# Name
+
+Hicada stands for "Hiccup Compiler aus dem [Allgäu](https://en.wikipedia.org/wiki/Allg%C3%A4u)".
+
 # License
 
 EPL, same as Clojure.
