@@ -32,11 +32,16 @@
 (defn camel-case-keys
   "Recursively transforms all map keys into camel case."
   [m]
-  (if (map? m)
+  (cond
+    (map? m)
     (reduce-kv
       (fn [m k v]
         (assoc m (camel-case k) v))
       {} m)
+    ;; React native accepts :style [{:foo-bar ..} other-styles] so camcase those keys:
+    (vector? m)
+    (mapv camel-case-keys m)
+    :else
     m))
 
 (defn element?

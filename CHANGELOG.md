@@ -1,3 +1,9 @@
+# 0.1.7
+React Native: Also camelcase :style when passing a vector.
+Eg:
+[:Text {:style [{:border-bottom "10"} other-styles]}]
+Now also camelCases the :border-bottom style key
+
 # 0.1.6
 Allow users to fine tune camelCase - kebab-case conversion.
 

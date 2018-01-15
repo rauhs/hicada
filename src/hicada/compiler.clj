@@ -89,6 +89,8 @@
                    (compile-config-kv k v))) {} attrs)
     attrs))
 #_(compile-config {:class ["b" 'c] :style {:border-width "2px"}}) ;; camelcase style
+;; React native style:
+#_(compile-config {:class ["b" 'c] :style [{:border-width "2px"}]}) ;; camelcase style
 #_(compile-config {:on-click ()})
 
 
@@ -454,7 +456,7 @@
   (compile '[:* a b])
   (compile '[:> :div props b])
 
-  ;; Doesn't convert string keys, but
+  ;; Doesn't convert string keys, but do convert keywords & symbols:
   (compile '[X {"kebab-case" y :camel-case x camel-case-2 8}])
 
   (compile '[Transition {:in in-prop} (fn [state])]) ;; works eq to :>
@@ -472,5 +474,8 @@
             :default-ns 'my.rn.native})
   (compile '[:rn/Text a b] {})
   (compile '[:Text a b] {:no-string-tags? true})
+
+  (compile '[:Text {:style [{:border-bottom "2px"}]}])
+
   (compile '[:div a b] {:array-children? false}))
 
