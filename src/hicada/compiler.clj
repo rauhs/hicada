@@ -469,6 +469,17 @@
                      :timeout {:enter 300, :exit 100}}
       (fn [state])])
 
+  ;; Issue #2:
+  (compile '[:div {:ihtml "<div>hi</div>"}]
+           {:transform-fn (fn [[tag attr ch]]
+                            (if-some [html (:ihtml attr)]
+                              [tag
+                               (-> attr
+                                   (dissoc :ihtml)
+                                   (assoc :dangerouslySetInnerHTML {:__html html}))
+                               ch]
+                              [tag attr ch]))})
+
   (compile '[:Text a b]
            {:no-string-tags? true
             :default-ns 'my.rn.native})
