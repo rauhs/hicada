@@ -84,8 +84,10 @@ You can use hicada with:
 
 # Examples
 
-There is some examples in the bottom of the `hicada.compiler` namespace. For
-instance, if you often clone elements you can write a DSL to support it:
+There is a lot of examples in the bottom of the `hicada.compiler` namespace.
+Check them out!
+
+For instance, if you often clone elements you can write a DSL to support it:
 
 
 ```clj
@@ -112,6 +114,17 @@ instance, if you often clone elements you can write a DSL to support it:
  (js/React.cloneElement x (js* "{'key':~{}}" k)))
 
 ```
+## Markdown
+
+You could create your own handler to transform markdown at compile time:
+
+```clojure
+[:*md*
+  "This is *great*, why not:"
+  "Hi there *" user-name "*"]
+```
+
+[Check the wiki for the impl](https://github.com/rauhs/hicada/wiki/Markdown-parsing)
 
 # Name
 
