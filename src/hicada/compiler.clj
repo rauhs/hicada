@@ -413,6 +413,8 @@
    o :inline? false - NOT supported yet. Possibly in the future...
    o :child-config - Called for every element with [config raw-element normalized-element]
                      to get a new configuration for element's children
+   o :transform-fn - Called with [[tag attrs children *env*]] before emitting, to get
+                     transformed element as [tag attrs children]
 
    React Native special recommended options:
    o :no-string-tags? - Never output string tags (don't exits in RN)

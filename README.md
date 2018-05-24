@@ -57,6 +57,9 @@ A map with the following keys:
   not do the conversion. With a custom function you can fine tune which keys
   are converted and which are not.
 
+- `:transform-fn`: Called with [[tag attrs children *env*]] before emitting, to get
+  transformed element as [tag attrs children]
+
 - `:child-config`: Called for every element with [config raw-element normalized-element] to get
   a new configuration to process element's children with. This allows to keep track of levels in the
   element tree, e.g. to create an `html` form, that adds attributes at the root.
