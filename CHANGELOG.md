@@ -1,5 +1,6 @@
-# MASTER
+# 0.1.8
 New option: `:child-config` enables to change processing as you go down levels
+Thanks @bendlas
 
 # 0.1.7
 React Native: Also camelcase :style when passing a vector.
