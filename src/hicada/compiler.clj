@@ -36,11 +36,17 @@
                      ;; A fn that will get [tag attr children] and return
                      ;; [tag attr children] just before emitting.
                      :transform-fn identity
-                     :create-element 'js/React.createElement})
+                     :create-element 'js/React.createElement
+                     :child-config (fn [options form expanded] options)})
 
 (def ^:dynamic *config* default-config)
 (def ^:dynamic *handlers* default-handlers)
 (def ^:dynamic *env* nil)
+
+(defmacro with-child-config [form expanded-form & body]
+  `(let [cfg# *config*
+         new-cfg# ((:child-config *config*) *config* ~form ~expanded-form)]
+     (binding [*config* new-cfg#] ~@body)))
 
 (defmulti compile-react
           "Compile a Clojure data structure into a React fn call."
@@ -232,7 +238,9 @@
     (get *handlers* tag)
     (let [f (get *handlers* tag)
           [klass attrs children] (apply f element)]
-      (emit-react klass attrs (mapv compile-html children)))
+      (emit-react klass attrs
+                  (with-child-config element [klass attrs]
+                    (mapv compile-html children))))
 
     ;; e.g. [:span "foo"]
     ;(every? literal? element)
@@ -241,7 +249,9 @@
     ;; e.g. [:span {} x]
     (and (literal? tag) (map? attrs))
     (let [[tag attrs _] (norm/element [tag attrs])]
-      (emit-react tag attrs (mapv compile-html children)))
+      (emit-react tag attrs
+                  (with-child-config element [tag attrs]
+                    (mapv compile-html children))))
 
     (literal? tag)
     ;; We could now interpet this as either:
@@ -401,10 +411,15 @@
    o :camelcase-key-pred - defaults to (some-fn keyword? symbol?), ie. map keys that have
                            string keys, are NOT by default converted from kebab-case to camelCase!
    o :inline? false - NOT supported yet. Possibly in the future...
+   o :child-config - Called for every element with [config raw-element normalized-element]
+                     to get a new configuration for element's children
+   o :transform-fn - Called with [[tag attrs children *env*]] before emitting, to get
+                     transformed element as [tag attrs children]
 
    React Native special recommended options:
    o :no-string-tags? - Never output string tags (don't exits in RN)
    o :default-ns - Any unprefixed component will get prefixed with this ns.
+   o :child-config - (fn [config raw-element normalized-element] -> config) change processing options as hicada goes down the tree
   - handlers:
    A map to handle special tags. See default-handlers in this namespace.
   - env: The macro environment. Not used currently."
