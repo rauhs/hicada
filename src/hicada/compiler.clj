@@ -170,8 +170,15 @@
   [[_ bindings & body]]
   `(when-some ~bindings ~@(butlast body) ~(emitter (last body))))
 
-(defmethod compile-form "when-not"
+(defmethod compile-form "when-let"
+  [[_ bindings & body]]
+  `(when-let ~bindings ~@(butlast body) ~(emitter (last body))))
 
+(defmethod compile-form "when-first"
+  [[_ bindings & body]]
+  `(when-first ~bindings ~@(butlast body) ~(emitter (last body))))
+
+(defmethod compile-form "when-not"
   [[_ bindings & body]]
   `(when-not ~bindings ~@(doall (for [x body] (emitter x)))))
 
@@ -182,6 +189,10 @@
 (defmethod compile-form "if-some"
   [[_ bindings & body]]
   `(if-some ~bindings ~@(doall (for [x body] (emitter x)))))
+
+(defmethod compile-form "if-let"
+  [[_ bindings & body]]
+  `(if-let ~bindings ~@(doall (for [x body] (emitter x)))))
 
 (defmethod compile-form "case"
   [[_ v & cases]]
@@ -503,5 +514,10 @@
 
   (compile '[:Text {:style [{:border-bottom "2px"}]}])
 
-  (compile '[:div a b] {:array-children? false}))
+  (compile '[:div a b] {:array-children? false})
 
+  (compile '(when-let [plop "a"] [:h1.b.c {:class plop}]))
+  (compile '(when-first [plop ["a" "b"]] [:h1.b.c {:class plop}]))
+  (compile '(if-let [plop "a"]
+              [:h1.b.c {:class plop}]
+              [:h1.d.e {:class "not-plop"}])))
