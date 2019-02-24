@@ -17,8 +17,13 @@
     [hicada.normalize :as norm]
     [hicada.util :as util]))
 
-(def default-handlers {:> (fn [_ klass attrs & children]
-                            [klass attrs children])
+(def default-handlers {:> (fn
+                            ([_ klass]
+                             [klass {} nil])
+                            ([_ klass attrs & children]
+                             (if (map? attrs)
+                               [klass attrs children]
+                               [klass {} (cons attrs children)])))
                        :* (fn [_ attrs & children]
                             (if (map? attrs)
                               ['js/React.Fragment attrs children]
