@@ -283,7 +283,9 @@
     ;; since a map doesn't make any sense as a ReactNode.
     ;; [foo {...} ch0 ch1] NEVER makes sense to interpret as a sequence
     (and (vector? element) (map? attrs))
-    (emit-react tag attrs children)
+    (emit-react tag attrs
+                  (with-child-config element [tag attrs]
+                    (mapv compile-html children)))
 
     (seq? element)
     (seq (mapv compile-html element))
