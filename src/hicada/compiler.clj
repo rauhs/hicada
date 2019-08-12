@@ -221,10 +221,10 @@
 
 (defmethod compile-form "cond"
   [[_ & clauses]]
-  `(cond ~@(mapcat
+  `(cond ~@(doall
+            (mapcat
              (fn [[check expr]] [check (emitter expr)])
-             (partition 2 clauses))))
-
+             (partition 2 clauses)))))
 
 (defmethod compile-form :default [expr] expr)
 
