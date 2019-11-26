@@ -379,7 +379,7 @@
   "Emits the final react js code"
   [tag attrs children]
   (let [{:keys [transform-fn emit-fn inline? wrap-input?
-                create-element array-children?]} *config*
+                create-element array-children? server-render?]} *config*
         [tag attrs children] (transform-fn [tag attrs children *env*])]
     (if inline?
       (let [type (or (and wrap-input? (util/controlled-input-class tag attrs))
@@ -405,7 +405,7 @@
                    wrapper-class
                    (tag->el tag))
                  (tag->el tag))
-            cfg (to-js (compile-config attrs))]
+            cfg (if server-render? attrs (to-js (compile-config attrs)))]
         (if emit-fn
           (emit-fn el cfg children)
           (apply list create-element el cfg children))))))
