@@ -14,8 +14,9 @@
   the ^:dynamic config anymore!"
   (:refer-clojure :exclude [compile])
   (:require
-    [hicada.normalize :as norm]
-    [hicada.util :as util]))
+   [hicada.macros #?(:clj :refer :cljs :refer-macros) [with-child-config]]
+   [hicada.normalize :as norm]
+   [hicada.util :as util]))
 
 (def default-handlers {:> (fn
                             ([_ klass]
@@ -48,10 +49,7 @@
 (def ^:dynamic *handlers* default-handlers)
 (def ^:dynamic *env* nil)
 
-(defmacro with-child-config [form expanded-form & body]
-  `(let [cfg# *config*
-         new-cfg# ((:child-config *config*) *config* ~form ~expanded-form)]
-     (binding [*config* new-cfg#] ~@body)))
+
 
 (defmulti compile-react
           "Compile a Clojure data structure into a React fn call."
@@ -59,7 +57,7 @@
             (cond
               (vector? x) :vector
               (seq? x) :seq
-              :else (class x))))
+              :else (#?(:clj class :cljs type) x))))
 
 (defmulti compile-config-kv (fn [name value] name))
 
@@ -329,7 +327,7 @@
               (map? x) :map
               (vector? x) :vector
               (keyword? x) :keyword
-              :else (class x))))
+              :else (#?(:clj class :cljs type) x))))
 
 (defn- to-js-map
   "Convert a map into a JavaScript object."
@@ -367,7 +365,7 @@
   "A :div is translated to \"div\" and symbol 'ReactRouter stays."
   [x]
   (assert (or (symbol? x) (keyword? x) (string? x) (seq? x))
-          (str "Got: " (class x)))
+          (str "Got: " (#?(:clj class :cljs type) x)))
   (if (keyword? x)
     (if (:no-string-tags? *config*)
       (symbol (or (namespace x) (some-> (:default-ns *config*) name)) (name x))
